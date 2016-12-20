@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mappper.dtd">
+
+<mapper namespace="com.springmvc.dao.DeptMapper">
+	<resultMap type="com.springmvc.pojo.Dept" id="dept-result">
+		<id property="deptno" column="DEPTNO" />
+		<result property="dname" column="DNAME" />
+		<result property="remark" column="REMARK" />
+	</resultMap>
+	
+	<sql id="pageSQLHead">
+		select DEPTNO,DNAME,REMARK from (
+		select row_number()
+		over (
+	</sql>
+
+	<sql id="orderBy">
+		<if test="sort != null and order != null">
+			order by
+			<choose>
+				<when test="sort=='dname'">DNAME</when>
+				<otherwise>DEPTNO</otherwise>
+			</choose>
+			<if test="order=='asc'">ASC</if>
+			<if test="order=='desc'">DESC</if>
+		</if>
+	</sql>
+
+	<sql id="whereCase">
+		<where>
+			1=1
+			<if test="dname != null and dname != ''">
+				and DNAME like #{dname}
+			</if>
+		</where>
+	</sql>
+
+	<sql id="pageSQLFoot">
+	  <![CDATA[ ) where rn > #{pageno} and rn <= #{pagesize}]]>
+	</sql>
+
+	<select id="findPager" resultMap="dept-result">
+		<include refid="pageSQLHead" />
+		<include refid="orderBy" />
+		) rn,c.* from T_DEPT c
+		<include refid="whereCase" />
+		<include refid="pageSQLFoot" />
+	</select>
+
+	<select id="findTotal" resultType="int">
+		select count(deptno) from T_DEPT
+		<include refid="whereCase" />
+	</select>
+	
+	
+</mapper>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mappper.dtd">
+
+<mapper namespace="com.springmvc.dao.EmployeeMapper">
+	<resultMap type="com.springmvc.pojo.Employee" id="employee-result">
+		<id property="empno" column="EMPNO" />
+		<result property="ename" column="ENAME" />
+		<result property="password" column="PASSWORD" />
+		<result property="realname" column="REALNAME" />
+		<result property="sex" column="SEX" />
+		<result property="job" column="JOB" />
+		<result property="hiredate" column="HIREDATE" />
+		<result property="state" column="STATE" />
+		<association property="dept" column="DEPTNO" javaType="com.springmvc.pojo.Dept" resultMap="dept-result" />
+		<association property="empExt" column="empno" javaType="com.springmvc.pojo.EmpExt" resultMap="ext-result" />
+	</resultMap>
+	
+	<resultMap type="com.springmvc.pojo.Dept" id="dept-result">
+		<id property="deptno" column="DEPTNO" />
+		<result property="dname" column="DNAME" />
+		<result property="remark" column="REMARK" />
+		<collection property="emps" ofType="com.springmvc.pojo.Employee" resultMap="employee-result" />
+	</resultMap>
+	
+	<resultMap type="com.springmvc.pojo.EmpExt" id="ext-result">
+		<id property="empno" column="empno" />
+		<result property="birthday" column="birthday" />
+		<result property="education" column="education" />
+		<result property="speciality" column="speciality" />
+		<result property="worktime" column="worktime" />
+		<result property="phone" column="phone" />
+		<result property="email" column="email" />
+		<result property="photo" column="photo" />
+		<result property="address" column="address" />
+		<result property="power" column="power" />
+		<result property="sal" column="sal" />
+	</resultMap>
+	
+	<select id="findById" parameterType="int" resultMap="employee-result">
+		select te.empno,ename,password,realname,sex,job,hiredate,state,
+		d.deptno,dname,remark,birthday,education,speciality,worktime,phone,email,photo,address,power,sal 
+		from T_EMPLOYEE te,T_DEPT d,T_EMP_EXT ex 
+		where te.dept=d.deptno and ex.empno=te.empno and te.EMPNO=#{empno}
+	</select>
+	
+	
+<!-- 条件查询和分页 -->
+	<select id="findParam" resultMap="employee-result">
+    	select empno,ename,password,realname,sex,job,hiredate,state,dept from T_EMPLOYEE 
+    	<include refid="whereCase" />
+  	</select>
+  				
+	<sql id="whereCase">
+		<where>
+		1=1 
+		<if test="realname!=null and realname!=''">and realname LIKE #{realname}</if>
+		<if test="sex!=null and sex!=''">and sex = #{sex}</if>
+		<if test="deptno!=null and deptno>0">and dept = #{deptno}</if>
+		<if test="state!=null and state!=''">and state = #{state}</if>
+		<if test="beginDate!=null and endDate!=null">and hiredate between #{beginDate} and #{endDate}</if>		
+		</where>		
+	</sql>
+	
+	<sql id="pageSQLHead">
+		select empno,ename,password,realname,sex,job,hiredate,state,dept from(select row_number() over(
+	</sql>
+	
+	<sql id="orderBy">
+		<if test="sort !=null and order!=null">
+			order by
+			<choose>
+				<when test="sort=='realname'">realname</when>
+				<when test="sort=='sex'">sex</when>
+				<when test="sort=='job'">job</when>
+				<when test="sort=='hiredate'">hiredate</when>
+				<when test="sort=='state'">state</when>
+				<when test="sort=='dept'">dept</when>
+				<otherwise>empno</otherwise>
+			</choose>
+		<if test="order=='asc'">asc</if>
+		<if test="order=='desc'">desc</if>
+		</if>
+	</sql>
+
+	
+	<sql id="pageSQLFoot">
+		<![CDATA[ ) where rn >#{beginPage} and rn<=#{endPage} ]]>
+	</sql>
+	
+	<select id="findPager" resultMap="employee-result">
+		<include refid="pageSQLHead" />
+		<include refid="orderBy" />
+		) rn,T_EMPLOYEE.* from T_EMPLOYEE
+		<include refid="whereCase" />
+		<include refid="pageSQLFoot" />
+	
+	</select>
+		
+	<select id="findTotal" resultType="int">
+		select count(empno) from T_EMPLOYEE
+		<include refid="whereCase"></include>
+	</select>
+</mapper>

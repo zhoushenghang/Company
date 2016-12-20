@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mappper.dtd">
+
+<mapper namespace="com.springmvc.dao.NoticeMapper">
+	
+	<resultMap type="com.springmvc.pojo.Notice" id="notice-result">
+		<id property="nid" column="NID" />
+		<result property="title" column="TITLE" />
+		<result property="contentt" column="CONTENTT" />
+		<result property="html" column="HTML" />
+		<result property="pubdate" column="PUBDATE" />
+		<result property="lastview" column="LASTVIEW" />
+		<result property="viewcount" column="VIEWCOUNT" />
+		<result property="filet" column="FILET" />
+		<!-- 一对多 -->
+		<association property="employees" column="EMPNO" javaType="com.springmvc.pojo.Employee" resultMap="employee-result" />
+	</resultMap>
+	
+	<resultMap type="com.springmvc.pojo.Employee" id="employee-result">
+		<id property="empno" column="EMPNO" />
+		<result property="ename" column="ENAME" />
+		<result property="password" column="PASSWORD" />
+		<result property="realname" column="REALNAME" />
+		<result property="sex" column="SEX" />
+		<result property="job" column="JOB" />
+		<result property="hiredate" column="HIREDATE" />
+		<result property="state" column="STATE" />
+		<!-- 多对一 -->
+		<collection property="notices" ofType="com.springmvc.pojo.Notice" resultMap="notice-result" />
+	</resultMap>
+	<select id="findNoticeById" parameterType="int" resultMap="notice-result">
+		select nid,title,contentt,html,pubdate,lastview,viewcount,filet,te.empno,ename,password,realname,sex,job,hiredate,state from T_NOTICE tn,T_EMPLOYEE te where tn.empno=te.empno and  NID=#{nid}
+	</select>
+	
+	<select id="findEmployeeById" parameterType="int" resultMap="employee-result">
+		select nid,title,contentt,html,pubdate,lastview,viewcount,filet,te.empno,ename,password,realname,sex,job,hiredate,state from T_NOTICE tn,T_EMPLOYEE te where tn.empno=te.empno and te.empno=#{empno}
+	</select>
+	
+	
+
+	
+	
+</mapper>

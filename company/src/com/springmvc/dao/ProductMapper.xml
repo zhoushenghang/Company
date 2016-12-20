@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper 
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mappper.dtd">
+
+<mapper namespace="com.springmvc.dao.ProductMapper">
+	<resultMap type="com.springmvc.pojo.Product" id="product-result">
+		<id property="pid" column="PID" />	
+		<result property="pnum" column="PNUM" />
+		<result property="pname" column="PNAME" />
+		<result property="ptype" column="PTYPE" />
+		<result property="pstyle" column="PSTYLE" />
+		<result property="pic" column="PIC" />
+	</resultMap>
+	
+	<sql id="pageSQLHead">
+		select PID,PNUM,PNAME,PTYPE,PSTYLE,PIC from (
+		select row_number()
+		over (
+	</sql>
+
+	<sql id="orderBy">
+		<if test="sort != null and order != null">
+			order by
+			<choose>
+				<when test="sort=='id'">PID</when>
+				<when test="sort=='pnum'">PNUM</when>
+				<when test="sort=='pname'">PNAME</when>
+				<when test="sort=='ptype'">PTYPE</when>
+				<when test="sort=='pstyle'">PSTYLE</when>
+				<when test="sort=='pic'">PIC</when>
+				<otherwise>PID</otherwise>
+			</choose>
+			<if test="order=='asc'">ASC</if>
+			<if test="order=='desc'">DESC</if>
+		</if>
+	</sql>
+
+	<sql id="whereCase">
+		<where>
+			1=1
+			<if test="pname != null and name != ''">
+				and PNAME like #{pname}
+			</if>
+			<if test="pnum != null and pnum != ''">
+				and PNUM like #{pnum}
+			</if>
+		</where>
+	</sql>
+
+	<sql id="pageSQLFoot">
+	  <![CDATA[ ) where rn > #{pageno} and rn <= #{pagesize}]]>
+	</sql>
+
+	<select id="findPager" resultMap="product-result">
+		<include refid="pageSQLHead" />
+		<include refid="orderBy" />
+		) rn,c.* from T_PRODUCT c
+		<include refid="whereCase" />
+		<include refid="pageSQLFoot" />
+	</select>
+
+	<select id="findTotal" resultType="int">
+		select count(pid) from T_PRODUCT
+		<include refid="whereCase" />
+	</select>
+	
+	
+</mapper>

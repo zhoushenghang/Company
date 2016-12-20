@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.1.xsd">
+
+
+	<!-- 扫描 controller,dao,service包,使spring自动注入的注解生效-->
+	<context:component-scan base-package="com.**.dao,com.**.service"/>
+	
+	<!-- 读取属性文件 -->
+	<util:properties id="propertiesReader" location="classpath:jdbc.properties"/>
+	
+	<!-- 数据源配置 -->
+	<bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+		<property name="driverClass" value="#{propertiesReader[driver]}"/>
+		<property name="jdbcUrl" value="#{propertiesReader[url]}"/>
+		<property name="user" value="#{propertiesReader[username]}"/>
+		<property name="password" value="#{propertiesReader[password]}"/>
+		<!-- 保留的最小连接数 -->
+		<property name="minPoolSize" value="2"/>
+		<!-- 保留的最大连接数，默认15个 -->
+		<property name="maxPoolSize" value="20"/>
+		<!-- 一开始就得到整个数量的连接数 -->
+		<property name="initialPoolSize" value="10"/>
+		<!-- 连接耗尽的时候一次同时生成几个链接 -->
+		<property name="acquireIncrement" value="2"/>
+		<!-- 最大空间时间120秒没有使用的链接关掉 -->
+		<property name="maxIdleTime" value="120"/>
+	</bean>
+	
+	<!-- mybatis连接数据源 -->
+	<bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<!-- mapperLocations用来指定Mapper映射文件的位置 ， 如果映射文件与相应的接口同名，且在同一路径下， 那么可以不配置该选项 
+		<property name="mapperLocations" value="classpath*:com/**/dao/*.xml"/>
+		-->
+	</bean>
+	
+	<!-- 配置 Mapper(Dao)接口的自动扫描，注入session工厂 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.**.dao"/>	
+	</bean>
+	
+	<!-- 配置事务管理 -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>	
+	</bean>
+			
+	<tx:advice id="txAdvice" transaction-manager="transactionManager">
+		<tx:attributes>
+			<tx:method name="add*" propagation="REQUIRED" isolation="DEFAULT" />
+			<tx:method name="modify*" propagation="REQUIRED" />
+			<tx:method name="remove*" propagation="REQUIRED" />
+			<tx:method name="*" propagation="NOT_SUPPORTED" read-only="true" />
+		</tx:attributes>
+	</tx:advice>
+
+	<aop:config>
+		<aop:pointcut expression="execution(* com.**.service.*.*(..))" id="methods" />
+		<aop:advisor advice-ref="txAdvice" pointcut-ref="methods" />
+	</aop:config>
+	
+	
+</beans>
